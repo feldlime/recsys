@@ -3,6 +3,8 @@ from typing import List
 from fastapi import APIRouter, FastAPI, Request
 from pydantic import BaseModel
 
+from recmodels import models
+
 from service.api.exceptions import UserNotFoundError
 from service.log import app_logger
 
@@ -42,6 +44,9 @@ async def get_reco(
 
     k_recs = request.app.state.k_recs
     reco = list(range(k_recs))
+    # current_model = models.simple_range
+    # reco = current_model.predict(4, k_recs)
+
     return RecoResponse(user_id=user_id, items=reco)
 
 
