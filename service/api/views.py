@@ -4,8 +4,7 @@ from fastapi import APIRouter, FastAPI, Request
 from pydantic import BaseModel
 
 from recmodels import models
-
-from service.api.exceptions import UserNotFoundError
+from service.api.exceptions import ModelNotFoundError, UserNotFoundError
 from service.log import app_logger
 
 
@@ -37,15 +36,15 @@ async def get_reco(
 ) -> RecoResponse:
     app_logger.info(f"Request for model: {model_name}, user_id: {user_id}")
 
-    # Write your code here
-
     if user_id > 10**9:
         raise UserNotFoundError(error_message=f"User {user_id} not found")
 
-    k_recs = request.app.state.k_recs
-    reco = list(range(k_recs))
-    # current_model = models.simple_range
-    # reco = current_model.predict(4, k_recs)
+    if model_name not in models.__dict__:
+        raise ModelNotFoundError(error_message=f'Model {model_name} not found')
+
+    # k_recs = request.app.state.k_recs
+    current_model = models.__dict__[model_name]
+    reco = current_model.predict(user_id)
 
     return RecoResponse(user_id=user_id, items=reco)
 
