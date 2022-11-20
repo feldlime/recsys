@@ -4,15 +4,16 @@ Rec sys models interface
 
 from typing import Callable, List
 
+
 class RecModel:
     """Rec model base"""
-    model: Callable[[int, int], List]
+    model: Callable[[int, int], List[int]]
     weights: List
-    __trained: bool = True
+    _k: int
+    _trained: bool = True
 
-
-    def __init__(self, rec_model: Callable[[int, int], List]) -> None:
-        self.model = rec_model # type: ignore
+    def __init__(self, rec_model: Callable[[int, int], List[int]]) -> None:
+        self.model = rec_model  # type: ignore
         self._k = 10
 
     @property
@@ -20,12 +21,10 @@ class RecModel:
         return self._k
 
     def train(self) -> None:
-        self.__trained = True
+        self._trained = True
         self.weights = []
 
-    def predict(self, inlet: int) -> List:
-        if self.__trained:
-            prediction = self.model(inlet, self.k)
-            return prediction
-        else:
+    def predict(self, inlet: int) -> List[int]:
+        if not self._trained:
             raise Exception("Model was not trained.")
+        return self.model(inlet, self._k)  # type: ignore

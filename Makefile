@@ -8,7 +8,7 @@ endif
 
 export PATH := $(BIN):$(PATH)
 
-PROJECT := service
+PROJECT := service recmodels
 TESTS := tests
 
 IMAGE_NAME := reco_service
