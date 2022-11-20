@@ -16,20 +16,16 @@ class RecModel:
         self._k = 10
 
     @property
-    def k(self):
+    def k(self) -> int:
         return self._k
 
     def train(self) -> None:
         self.__trained = True
         self.weights = []
 
-    def predict(self, inlet: int) -> None:
+    def predict(self, inlet: int) -> List:
         if self.__trained:
-            return self.model(inlet, self.k)
+            prediction = self.model(inlet, self.k)
+            return prediction
         else:
             raise Exception("Model was not trained.")
-
-def set_model(func):
-    def wrapper():
-        return RecModel(func)
-    return wrapper
