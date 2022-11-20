@@ -6,13 +6,13 @@ from typing import Callable, List
 
 class RecModel:
     """Rec model base"""
-    model: Callable
+    model: Callable[[int, int], List]
     weights: List
     __trained: bool = True
-    
 
-    def __init__(self, rec_model: Callable) -> None:
-        self.model = rec_model
+
+    def __init__(self, rec_model: Callable[[int, int], List]) -> None:
+        self.model = rec_model # type: ignore
         self._k = 10
 
     @property
