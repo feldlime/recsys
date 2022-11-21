@@ -2,13 +2,16 @@
 Put your rec model here.
 """
 
+from typing import List
+
 from .reco import RecModel
 
-__all__ = ('test',)
 
-
-def simple_range(i: int, k: int = 0) -> list:
-    return list(range(k))
+def simple_range(user_id: int, k_recs: int = 0) -> List[int]:
+    return list(range(k_recs))
 
 
 test = RecModel(simple_range)  # don't remove this test model
+
+# You can add models prepared to working in service into this dict
+to_prod = {'test': test}

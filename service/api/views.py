@@ -39,11 +39,12 @@ async def get_reco(
     if user_id > 10**9:
         raise UserNotFoundError(error_message=f"User {user_id} not found")
 
-    if model_name not in models.__dict__:
+    try:
+        current_model = models.to_prod[model_name]
+    except KeyError:
         raise ModelNotFoundError(error_message=f'Model {model_name} not found')
 
-    # k_recs = request.app.state.k_recs
-    current_model = models.__dict__[model_name]
+    current_model.k = request.app.state.k_recs
     reco = current_model.predict(user_id)
 
     return RecoResponse(user_id=user_id, items=reco)
