@@ -28,6 +28,17 @@ class UserNotFoundError(AppException):
         super().__init__(status_code, error_key, error_message, error_loc)
 
 
+class AuthError(AppException):
+    def __init__(
+        self,
+        status_code: int = HTTPStatus.FORBIDDEN,
+        error_key: str = "auth_error",
+        error_message: str = "Authentification error",
+        error_loc: tp.Optional[tp.Sequence[str]] = None,
+    ):
+        super().__init__(status_code, error_key, error_message, error_loc)
+
+
 class ModelNotFoundError(AppException):
     def __init__(
         self,

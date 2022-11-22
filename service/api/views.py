@@ -1,10 +1,16 @@
+from os import getenv as env
 from typing import List
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Request, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from recmodels import models
-from service.api.exceptions import ModelNotFoundError, UserNotFoundError
+from recmodels import rmodels
+from service.api.exceptions import (
+    AuthError,
+    ModelNotFoundError,
+    UserNotFoundError,
+)
 from service.log import app_logger
 
 
@@ -14,6 +20,18 @@ class RecoResponse(BaseModel):
 
 
 router = APIRouter()
+
+ACCESS_TOKEN = env("ACCESS_TOKEN", "HH65JH877HFG6LKJ23")
+
+api_key = HTTPBearer(auto_error=False)
+
+
+async def get_api_key(
+    token: HTTPAuthorizationCredentials = Security(api_key),
+):
+    if token is not None and token.credentials == ACCESS_TOKEN:
+        return token.credentials
+    raise AuthError(error_message="Authorization error")
 
 
 @router.get(
@@ -33,6 +51,7 @@ async def get_reco(
     request: Request,
     model_name: str,
     user_id: int,
+    api_token: str = Depends(get_api_key),
 ) -> RecoResponse:
     app_logger.info(f"Request for model: {model_name}, user_id: {user_id}")
 
@@ -40,7 +59,7 @@ async def get_reco(
         raise UserNotFoundError(error_message=f"User {user_id} not found")
 
     try:
-        current_model = models.to_prod[model_name]
+        current_model = rmodels.to_prod[model_name]
     except KeyError:
         raise ModelNotFoundError(error_message=f'Model {model_name} not found')
 
