@@ -74,18 +74,18 @@ class UserKnn():
             return [user_inv_mapping[user] for user, _ in recs], [sim for _, sim in recs]
         return _recs_mapper
     
-    def predict(self, test: pd.DataFrame, N_recs: int = 10):
+    def predict(self, test: pd.DataFrame, train: pd.DataFrame, N_recs: int = 10):
         
         if not self.is_fitted:
             raise ValueError("Please call fit before predict")
         
         mapper = self._generate_recs_mapper(
             model=self.user_knn, 
-            user_mapping=self.mapping['users_mapping'],
-            user_inv_mapping=self.mapping['users_inv_mapping'],
+            user_mapping=self.users_mapping,
+            user_inv_mapping=self.users_inv_mapping,
             N=self.N_users
         )
-
+        self.watched = train.groupby('user_id').agg({'item_id': list})
         recs = pd.DataFrame({'user_id': test['user_id'].unique()})
         recs['sim_user_id'], recs['sim'] = zip(*recs['user_id'].map(mapper))
         recs = recs.set_index('user_id').apply(pd.Series.explode).reset_index()
