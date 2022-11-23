@@ -1,13 +1,12 @@
 from http import HTTPStatus
-from os import getenv as env
 
 from requests.structures import CaseInsensitiveDict
 from starlette.testclient import TestClient
 
-from service.settings import ServiceConfig
+from service.settings import ACCESS_TOKEN, ServiceConfig
 
 GET_RECO_PATH = "/reco/{model_name}/{user_id}"
-ACCESS_TOKEN = env('ACCESS_TOKEN', "HH65JH877HFG6LKJ23")
+
 header = CaseInsensitiveDict({"Authorization": f"Bearer {ACCESS_TOKEN}"})
 
 
@@ -45,6 +44,18 @@ def test_get_reco_for_unknown_user(
         response = client.get(path)
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json()["errors"][0]["error_key"] == "user_not_found"
+
+
+def test_get_reco_for_anauth_user(
+    client: TestClient,
+) -> None:
+    user_id = 3444
+    path = GET_RECO_PATH.format(model_name="test", user_id=user_id)
+    client.headers = CaseInsensitiveDict({"Authorization": "Bearer "})
+    with client:
+        response = client.get(path)
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()["errors"][0]["error_key"] == "auth_error"
 
 
 def test_get_reco_for_unknown_model(

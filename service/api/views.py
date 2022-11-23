@@ -1,4 +1,3 @@
-from os import getenv as env
 from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, Request, Security
@@ -12,6 +11,7 @@ from service.api.exceptions import (
     UserNotFoundError,
 )
 from service.log import app_logger
+from service.settings import ACCESS_TOKEN
 
 
 class RecoResponse(BaseModel):
@@ -20,8 +20,6 @@ class RecoResponse(BaseModel):
 
 
 router = APIRouter()
-
-ACCESS_TOKEN = env("ACCESS_TOKEN", "HH65JH877HFG6LKJ23")
 
 api_key = HTTPBearer(auto_error=False)
 
