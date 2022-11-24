@@ -1,8 +1,4 @@
-from os import getenv as env
-
-from pydantic import BaseSettings
-
-ACCESS_TOKEN: str = env("ACCESS_TOKEN")
+from pydantic import BaseSettings, SecretStr
 
 
 class Config(BaseSettings):
@@ -25,6 +21,7 @@ class LogConfig(Config):
 
 
 class ServiceConfig(Config):
+    access_token: SecretStr
     service_name: str = "reco_service"
     k_recs: int = 10
     log_config: LogConfig

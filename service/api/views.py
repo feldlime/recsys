@@ -11,7 +11,7 @@ from service.api.exceptions import (
     UserNotFoundError,
 )
 from service.log import app_logger
-from service.settings import ACCESS_TOKEN
+from service.settings import get_config
 
 
 class RecoResponse(BaseModel):
@@ -27,7 +27,8 @@ api_key = HTTPBearer(auto_error=False)
 async def get_api_key(
     token: HTTPAuthorizationCredentials = Security(api_key),
 ):
-    if token is not None and token.credentials == ACCESS_TOKEN:
+    api_tok = get_config().access_token
+    if token is not None and token.credentials == api_tok.get_secret_value():
         return token.credentials
     raise AuthError(error_message="Authorization error")
 

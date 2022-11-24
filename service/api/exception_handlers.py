@@ -11,12 +11,7 @@ from service.log import app_logger
 from service.models import Error
 from service.response import create_response, server_error
 
-from .exceptions import (
-    AppException,
-    AuthError,
-    ModelNotFoundError,
-    UserNotFoundError,
-)
+from .exceptions import AppException
 
 
 async def default_error_handler(
@@ -70,42 +65,9 @@ async def app_exception_handler(
     return create_response(exc.status_code, errors=errors)
 
 
-async def auth_error_handler(
-    request: Request,
-    exc: AuthError,
-) -> JSONResponse:
-    errors = [
-        Error(
-            error_key=exc.error_key,
-            error_message=exc.error_message,
-            error_loc=exc.error_loc,
-        )
-    ]
-    app_logger.error(str(errors))
-    return create_response(status.HTTP_403_FORBIDDEN, errors=errors)
-
-
-async def not_found_handler(
-        request: Request,
-        exc: Union[ModelNotFoundError, UserNotFoundError]
-) -> JSONResponse:
-    errors = [
-        Error(
-            error_key=exc.error_key,
-            error_message=exc.error_message,
-            error_loc=exc.error_loc,
-        )
-    ]
-    app_logger.error(str(errors))
-    return create_response(status.HTTP_404_NOT_FOUND, errors=errors)
-
-
 def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(HTTPException, http_error_handler)
     app.add_exception_handler(ValidationError, validation_error_handler)
     app.add_exception_handler(RequestValidationError, validation_error_handler)
     app.add_exception_handler(AppException, app_exception_handler)
     app.add_exception_handler(Exception, default_error_handler)
-    app.add_exception_handler(AuthError, auth_error_handler)
-    app.add_exception_handler(ModelNotFoundError, not_found_handler)
-    app.add_exception_handler(UserNotFoundError, not_found_handler)
