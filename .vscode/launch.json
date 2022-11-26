@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "RecSys",
+            "request": "launch",
+            "type": "python",
+            "module": "gunicorn",
+            "args": [
+                "main:app",
+                "-c",
+                "gunicorn.config.py",
+            ],
+            "jinja": true,
+            "justMyCode": true,
+        }
+    ]
+}
