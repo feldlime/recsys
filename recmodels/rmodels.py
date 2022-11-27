@@ -7,7 +7,7 @@ from typing import List
 from .reco import RecModel
 
 
-def simple_range(user_id: int, k_recs: int = 0) -> List[int]:
+def simple_range(user_id: int, k_recs: int = 10) -> List[int]:
     return list(range(k_recs))
 
 
