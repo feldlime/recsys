@@ -163,3 +163,58 @@ class UserKnn:
         recs = recs.sort_values(['user_id', 'score'], ascending=False)
         recs['rank'] = recs.groupby('user_id').cumcount() + 1
         return pd.concat([recs[recs['rank'] <= N_recs][['user_id', 'item_id']], recs_for_cold_users])
+
+
+    @timeit
+    def predict_one(self, test: int, interactions: pd.DataFrame, N_recs: int = 10) -> np.array:
+        """
+        Function for predict recommendation for user
+        :param test: users for predict
+        :param interactions: past interactions
+        :param N_recs: number of recommendations
+        :return: pd.DataFrame with user_id, recs
+        """
+        if not self.is_fitted:
+            raise ValueError("Please call fit before predict")
+
+        # create recs dataset with unique test id
+        recs = pd.DataFrame({'user_id': [test]})
+
+        # calculate popular items
+        popular_recs = np.array(interactions.groupby('item_id').count().sort_values(
+            by='user_id', ascending=False)[:N_recs].index)
+
+        # check cold users
+        if test not in self.users_inv_mapping.values():
+            return popular_recs
+
+        mapper = self._generate_recs_mapper(
+            model=self.user_knn,
+            user_mapping=self.users_mapping,
+            user_inv_mapping=self.users_inv_mapping,
+            N=self.N_users
+        )
+
+        recs['sim_user_id'], recs['sim'] = zip(*recs['user_id'].map(mapper))
+        recs = recs.set_index('user_id').apply(pd.Series.explode).reset_index()
+        sim_user_map = recs['sim_user_id'].map(self.users_mapping.get)
+
+        # looking for watched
+        watched = pd.DataFrame(
+            {'user_id': recs['sim_user_id'],
+             'item_id': self.get_viewed_item_ids(user_items=self.weights_matrix,
+                                                 user_id=sim_user_map)}).set_index('user_id')
+
+        recs = recs[~(recs['sim'] >= 1)] \
+            .merge(watched, left_on=['sim_user_id'], right_on=['user_id'], how='left') \
+            .explode('item_id') \
+            .sort_values(['user_id', 'sim'], ascending=False) \
+            .drop_duplicates(['user_id', 'item_id'], keep='first') \
+            .merge(self.item_idf, left_on='item_id', right_on='index', how='left')
+
+        recs['score'] = recs['sim'] * recs['idf']
+        recs = recs.sort_values(['user_id', 'score'], ascending=False)
+        recs['rank'] = recs.groupby('user_id').cumcount() + 1
+        return recs[recs['rank'] <= N_recs][['user_id', 'item_id']]
+
+
