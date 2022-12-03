@@ -23,7 +23,7 @@ def get_predictions(user_id: int, k_recs: int = 10) -> List[int]:
 if __name__ == "__main__":
     model_path: str = r"./data/models/userknn_tined.joblib"
     dataset_path: str = r"./data/datasets/interactions_processed.csv"
-    print('Loading model and dataset...')
+    print("Loading model and dataset...")
     load_model(model_path, dataset_path)
     print("Predicting...")
     print(get_predictions(699317))

@@ -40,9 +40,9 @@ def get_rmodel(
 
 
 rmodels = {
-    model_name: get_rmodel(model_path) for model_name,
-    model_path in get_config().models.items()
-    }
+    model_name: get_rmodel(model_path)
+    for model_name, model_path in get_config().models.items()
+}
 
 
 # rmodel = get_rmodel()
@@ -71,9 +71,9 @@ async def health() -> str:
     tags=["Recommendations"],
     response_model=RecoResponse,
     responses={
-                403: {"description": "Authorization error"},
-                404: {"description": "Not found"},
-               },
+        403: {"description": "Authorization error"},
+        404: {"description": "Not found"},
+    },
 )
 async def get_reco(
     request: Request,
@@ -89,7 +89,7 @@ async def get_reco(
     try:
         current_model = rmodels[model_name]
     except KeyError:
-        raise ModelNotFoundError(error_message=f'Model {model_name} not found')
+        raise ModelNotFoundError(error_message=f"Model {model_name} not found")
 
     # current_model.k = request.app.state.config.k_recs
     try:
