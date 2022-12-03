@@ -68,3 +68,4 @@ venv.bak/
 
 # Other
 data/
+.github/workflows/
