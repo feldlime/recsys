@@ -1,4 +1,5 @@
 from pydantic import BaseSettings, SecretStr
+from typing import Dict
 
 
 class Config(BaseSettings):
@@ -25,6 +26,8 @@ class ServiceConfig(Config):
     service_name: str = "reco_service"
     k_recs: int = 10
     log_config: LogConfig
+    models: Dict = {"userknn": r"./data/models/userknn_tined.joblib"}
+    dataset_path: str = r"./data/datasets/interactions_processed.csv"
 
 
 def get_config() -> ServiceConfig:
