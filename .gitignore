@@ -68,3 +68,5 @@ venv.bak/
 
 # Other
 data/
+.dvc
+.dvcignore

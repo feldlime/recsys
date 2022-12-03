@@ -1,11 +1,11 @@
+import os
+import sys
 from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname("./recmodels"), "recmodels"))
+
 from recmodels.reco import RecModel
 from service.api.exceptions import (
     AuthError,
@@ -14,7 +14,8 @@ from service.api.exceptions import (
 )
 from service.log import app_logger
 from service.settings import get_config
-import pandas as pd
+
+sys.path.append(os.path.join(os.path.dirname("./recmodels"), "recmodels"))
 
 
 class RecoResponse(BaseModel):
@@ -37,10 +38,16 @@ def get_rmodel(
         raise ModelNotFoundError(error_message="Model load error")
     return rmodel
 
-rmodels = {model_name: get_rmodel(model_path) for model_name, model_path in get_config().models.items()}
+
+rmodels = {
+    model_name: get_rmodel(model_path) for model_name,
+    model_path in get_config().models.items()
+    }
+
 
 # rmodel = get_rmodel()
 # recos = rmodel.predict_all()
+
 
 async def get_api_key(
     token: HTTPAuthorizationCredentials = Security(api_key),
@@ -84,7 +91,7 @@ async def get_reco(
     except KeyError:
         raise ModelNotFoundError(error_message=f'Model {model_name} not found')
 
-    # model.k = request.app.state.config.k_recs
+    # current_model.k = request.app.state.config.k_recs
     try:
         reco = current_model.predict(user_id)
         # reco = recos.loc[user_id]["item_id"].tolist()

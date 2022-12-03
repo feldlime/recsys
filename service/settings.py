@@ -1,5 +1,6 @@
-from pydantic import BaseSettings, SecretStr
 from typing import Dict
+
+from pydantic import BaseSettings, SecretStr
 
 
 class Config(BaseSettings):

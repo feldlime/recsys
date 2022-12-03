@@ -8,6 +8,7 @@ import joblib
 import pandas as pd
 from rectools import Columns
 
+
 class RecModel:
     """Rec model base"""
 
@@ -28,7 +29,7 @@ class RecModel:
         if dataset is not None:
             self.set_dataset(dataset)
         else:
-            self.dataset = None
+            self.dataset: pd.DataFrame = None
 
         self.k: int = k_recs
 
@@ -42,7 +43,7 @@ class RecModel:
             try:
                 self.dataset = pd.read_csv(dataset)
             except FileNotFoundError:
-                raise Exception(error_message="Model load error")
+                raise Exception("Model load error")
             self.dataset.rename(columns={
                                         'user_id': Columns.User,
                                         'item_id': Columns.Item,
@@ -51,22 +52,22 @@ class RecModel:
                                         },
                                 inplace=True)
 
-    def predict(self, inlet: Union[int, Iterable]) -> List[int]:
+    def predict(self, inlet: int) -> List[int]:
         if not self._trained:
             raise Exception("Model was not trained.")
         if self.dataset is None:
             raise Exception("Dataset was not loaded.")
         if 'predict' not in dir(self.model):
             raise Exception("Model has no predict method.")
-        try:
-            user_features = self.dataset[self.dataset[Columns.User] == inlet]
-        except KeyError:
-            raise Exception(f"Dataset has no user_id {inlet}.")
-        return self.model.predict(
-                                user_features[Columns.UserItem],
+        # try:
+        #     user_features = self.dataset[self.dataset[Columns.User] == inlet]
+        # except KeyError:
+        #     raise Exception(f"Dataset has no user_id {inlet}.")
+        return self.model.predict_one(
+                                inlet,
                                 self.dataset,
                                 N_recs=self.k
-                                )[Columns.Item].tolist()
+                                ).tolist()
 
     def predict_all(self) -> pd.DataFrame:
         if not self._trained:
