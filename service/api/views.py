@@ -88,7 +88,7 @@ async def get_reco(
     except KeyError:
         raise ModelNotFoundError(error_message=f"Model {model_name} not found")
 
-    current_model.k = request.query_params.get("k", 10)
+    # current_model.k = request.query_params.get("k", 10)
     try:
         reco = current_model.predict(user_id)
     except KeyError:

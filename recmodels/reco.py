@@ -9,7 +9,9 @@ import pandas as pd
 
 
 class RecModel:
-    """Rec model base"""
+    """
+    Rec sys models interface
+    """
 
     def __init__(
         self,
@@ -45,7 +47,7 @@ class RecModel:
         try:
             self.model = joblib.load(model_path)
         except FileNotFoundError:
-            raise FileNotFoundError("Dataset not found")
+            raise FileNotFoundError("Model file not found")
         self._trained = True
 
     def set_dataset(self, dataset: Union[pd.DataFrame, str]) -> None:
@@ -59,10 +61,10 @@ class RecModel:
             try:
                 self.dataset = pd.read_csv(dataset)
             except FileNotFoundError:
-                raise Exception("Model load error")
+                raise Exception("Dataset file not found")
 
     def predict(
-        self, inlet: Union[int, pd.DataFrame], predict_method: str = "predict_one"
+        self, inlet: Union[int, pd.DataFrame], predict_method: str = "predict"
     ) -> List[int]:
         """
         Predict recommendations
@@ -71,8 +73,8 @@ class RecModel:
         """
         self._check_model()
         self._check_dataset()
-        self._check_predict_method(predict_method)
-        return getattr(self.model, predict_method)(inlet, self.dataset, N_recs=self.k)
+        self._check_method(predict_method)
+        return getattr(self.model, predict_method)(inlet, N_recs=self.k)
 
     def _check_model(self) -> None:
         """
@@ -83,15 +85,17 @@ class RecModel:
 
     def _check_dataset(self) -> None:
         """
-        Check if dataset is loaded
+        Check if dataset is loaded and has user_id and item_id columns
         """
         if self.dataset is None:
             raise Exception("Dataset was not loaded.")
+        if not set(["user_id", "item_id"]).issubset(self.dataset.columns):
+            raise Exception("Dataset has no user_id or item_id columns.")
 
-    def _check_predict_method(self, predict_method: str) -> None:
+    def _check_method(self, method: str) -> None:
         """
         Check if predict method exists
         :param predict_method: method for prediction
         """
-        if predict_method not in dir(self.model):
-            raise Exception(f"Model has no this predict method: {predict_method}.")
+        if method not in dir(self.model):
+            raise Exception(f"Model has no this method: {method}.")

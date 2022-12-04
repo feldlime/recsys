@@ -67,6 +67,10 @@ venv.bak/
 .mypy_cache/
 
 # Other
-data/
+*.csv
+*.zip
+*.joblib
+*.json
+*.pkl
 .dvc
 .dvcignore
