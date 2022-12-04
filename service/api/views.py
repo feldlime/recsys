@@ -16,6 +16,7 @@ from service.log import app_logger
 from service.settings import get_config
 
 sys.path.append(os.path.join(os.path.dirname("./recmodels"), "recmodels"))
+sys.path.append(os.path.join(os.path.dirname("./data/models"), "models"))
 
 
 class RecoResponse(BaseModel):
@@ -43,10 +44,6 @@ rmodels = {
     model_name: get_rmodel(model_path)
     for model_name, model_path in get_config().models.items()
 }
-
-
-# rmodel = get_rmodel()
-# recos = rmodel.predict_all()
 
 
 async def get_api_key(
@@ -91,10 +88,9 @@ async def get_reco(
     except KeyError:
         raise ModelNotFoundError(error_message=f"Model {model_name} not found")
 
-    # current_model.k = request.app.state.config.k_recs
+    current_model.k = request.query_params.get("k", 10)
     try:
         reco = current_model.predict(user_id)
-        # reco = recos.loc[user_id]["item_id"].tolist()
     except KeyError:
         raise UserNotFoundError(error_message=f"User {user_id} not found")
 
