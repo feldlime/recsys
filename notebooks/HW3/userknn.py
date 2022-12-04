@@ -1,5 +1,5 @@
 import time
-
+from typing import List, Union, Any
 from collections import Counter
 from typing import Dict, TypedDict
 
@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from implicit.nearest_neighbours import ItemItemRecommender
+from numpy import ndarray
 
 
 class UserKnn:
@@ -81,7 +82,7 @@ class UserKnn:
         return _recs_mapper
 
     @staticmethod
-    def get_viewed_item_ids(user_items: sp.sparse.csr_matrix, user_id: TypedDict) -> list[int]:
+    def get_viewed_item_ids(user_items: sp.sparse.csr_matrix, user_id: TypedDict) -> List[int]:
         """
         Return indices of items that user has interacted with.
         Parameters
@@ -166,7 +167,7 @@ class UserKnn:
 
 
     @timeit
-    def predict_one(self, test: int, interactions: pd.DataFrame, N_recs: int = 10) -> np.array:
+    def predict_one(self, test: int, interactions: pd.DataFrame, N_recs: int = 10) -> Union[ndarray, Any]:
         """
         Function for predict recommendation for user
         :param test: users for predict
@@ -197,6 +198,8 @@ class UserKnn:
 
         recs['sim_user_id'], recs['sim'] = zip(*recs['user_id'].map(mapper))
         recs = recs.set_index('user_id').apply(pd.Series.explode).reset_index()
+
+        # mapping similarity users_id to find it in sparse matrix
         sim_user_map = recs['sim_user_id'].map(self.users_mapping.get)
 
         # looking for watched
@@ -204,7 +207,7 @@ class UserKnn:
             {'user_id': recs['sim_user_id'],
              'item_id': self.get_viewed_item_ids(user_items=self.weights_matrix,
                                                  user_id=sim_user_map)}).set_index('user_id')
-
+        # join data
         recs = recs[~(recs['sim'] >= 1)] \
             .merge(watched, left_on=['sim_user_id'], right_on=['user_id'], how='left') \
             .explode('item_id') \
