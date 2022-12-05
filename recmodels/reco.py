@@ -72,7 +72,7 @@ class RecModel:
         :param predict_method: method for prediction
         """
         self._check_model()
-        self._check_dataset()
+        # self._check_dataset()
         self._check_method(predict_method)
         return getattr(self.model, predict_method)(inlet, N_recs=self.k)
 

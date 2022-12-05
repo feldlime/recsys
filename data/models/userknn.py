@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 from typing import Dict, Union
-from collections import Counter
+from collections import Counter, OrderedDict
 from implicit.nearest_neighbours import ItemItemRecommender
+import time
 
 
 class UserKnn:
@@ -49,6 +50,9 @@ class UserKnn:
         )
 
         self.watched = df.groupby(user_col).agg({item_col: list})
+        self.popular_recs = np.array(
+            df.groupby(item_col).count().sort_values(by=user_col, ascending=False).index
+        )
         return interaction_matrix
 
     def idf(self, n: int, x: float):
@@ -91,6 +95,23 @@ class UserKnn:
 
         return _recs_mapper
 
+    def timeit(func):
+        """
+        Decorator for measuring function's running time.
+        """
+
+        def measure_time(*args, **kw):
+            start_time = time.time()
+            result = func(*args, **kw)
+            print(
+                "Processing time of %s(): %.2f seconds."
+                % (func.__qualname__, time.time() - start_time)
+            )
+            return result
+
+        return measure_time
+
+    # @timeit
     def predict(self, test: Union[pd.DataFrame, int], N_recs: int = 10):
 
         if not self.is_fitted:
@@ -110,7 +131,7 @@ class UserKnn:
         try:
             recs["sim_user_id"], recs["sim"] = zip(*recs["user_id"].map(mapper))
         except Exception:
-            return []
+            return list(self.popular_recs)[:N_recs]
 
         recs = recs.set_index("user_id").apply(pd.Series.explode).reset_index()
 
@@ -128,4 +149,12 @@ class UserKnn:
         recs["score"] = recs["sim"] * recs["idf"]
         recs = recs.sort_values(["user_id", "score"], ascending=False)
         recs["rank"] = recs.groupby("user_id").cumcount() + 1
-        return recs[recs["rank"] <= N_recs]["item_id"].to_numpy().tolist()
+        recs = list(
+            OrderedDict.fromkeys(
+                (
+                    list(recs[recs["rank"] <= N_recs]["item_id"])
+                    + list(self.popular_recs)
+                )
+            )
+        )[:N_recs]
+        return recs

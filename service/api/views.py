@@ -31,10 +31,9 @@ api_key = HTTPBearer(auto_error=False)
 
 def get_rmodel(
     model_path: str,
-    dataset_path: str = get_config().dataset_path,
 ) -> RecModel:
     try:
-        rmodel = RecModel(model_path, dataset_path)
+        rmodel = RecModel(model_path)
     except FileNotFoundError:
         raise ModelNotFoundError(error_message="Model load error")
     return rmodel
