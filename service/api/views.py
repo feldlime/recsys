@@ -1,10 +1,12 @@
+import os
+import sys
 from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from recmodels import rmodels
+from recmodels.reco import RecModel
 from service.api.exceptions import (
     AuthError,
     ModelNotFoundError,
@@ -12,6 +14,9 @@ from service.api.exceptions import (
 )
 from service.log import app_logger
 from service.settings import get_config
+
+sys.path.append(os.path.join(os.path.dirname("./recmodels"), "recmodels"))
+sys.path.append(os.path.join(os.path.dirname("./data/models"), "models"))
 
 
 class RecoResponse(BaseModel):
@@ -22,6 +27,23 @@ class RecoResponse(BaseModel):
 router = APIRouter()
 
 api_key = HTTPBearer(auto_error=False)
+
+
+def get_rmodel(
+    model_path: str,
+    dataset_path: str = get_config().dataset_path,
+) -> RecModel:
+    try:
+        rmodel = RecModel(model_path, dataset_path)
+    except FileNotFoundError:
+        raise ModelNotFoundError(error_message="Model load error")
+    return rmodel
+
+
+rmodels = {
+    model_name: get_rmodel(model_path)
+    for model_name, model_path in get_config().models.items()
+}
 
 
 async def get_api_key(
@@ -46,9 +68,9 @@ async def health() -> str:
     tags=["Recommendations"],
     response_model=RecoResponse,
     responses={
-                403: {"description": "Authorization error"},
-                404: {"description": "Not found"},
-               },
+        403: {"description": "Authorization error"},
+        404: {"description": "Not found"},
+    },
 )
 async def get_reco(
     request: Request,
@@ -62,12 +84,15 @@ async def get_reco(
         raise UserNotFoundError(error_message=f"User {user_id} not found")
 
     try:
-        current_model = rmodels.to_prod[model_name]
+        current_model = rmodels[model_name]
     except KeyError:
-        raise ModelNotFoundError(error_message=f'Model {model_name} not found')
+        raise ModelNotFoundError(error_message=f"Model {model_name} not found")
 
-    current_model.k = request.app.state.k_recs
-    reco = current_model.predict(user_id)
+    current_model.k = request.query_params.get("k", 10)
+    try:
+        reco = current_model.predict(user_id)
+    except KeyError:
+        raise UserNotFoundError(error_message=f"User {user_id} not found")
 
     return RecoResponse(user_id=user_id, items=reco)
 
