@@ -17,6 +17,7 @@ CONTAINER_NAME := reco_service
 # Prepare
 
 .venv:
+	pip install -r requirements.txt
 	poetry install --no-root
 	poetry check
 
@@ -29,6 +30,7 @@ clean:
 	rm -rf .mypy_cache
 	rm -rf .pytest_cache
 	rm -rf $(VENV)
+	rm -rf __pycache__
 
 
 # Format

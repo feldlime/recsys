@@ -3,7 +3,6 @@ import sys
 from typing import List
 
 import pandas as pd
-from rectools import Columns
 from rectools.dataset import Dataset
 
 from recmodels.reco import RecModel
@@ -28,12 +27,7 @@ class LightFMModel(RecModel):
         super().__init__(*args, **kwargs)
         self.dataset: pd.DataFrame = self.dataset
         self.dataset.rename(
-            columns={
-                "user_id": Columns.User,
-                "item_id": Columns.Item,
-                "last_watch_dt": Columns.Datetime,
-                "watched_pct": Columns.Weight,
-            },
+            columns={"last_watch_dt": "datetime", "watched_pct": "weight"},
             inplace=True,
         )
         self.dataset["datetime"] = pd.to_datetime(self.dataset["datetime"])
