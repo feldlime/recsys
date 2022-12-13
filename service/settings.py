@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import List
 
 from pydantic import BaseSettings, SecretStr
 
@@ -24,12 +24,7 @@ class ServiceConfig(Config):
     service_name: str = "reco_service"
     k_recs: int = 10
     log_config: LogConfig
-    models: Dict = {
-        # "userknn": r"./data/models/userknn_tined.joblib",
-        # "userknn2": r"./data/models/userknn_1W.joblib",
-        # "userknn3": r"./data/models/userknn_1D.joblib",
-        "userknn4": r"./data/models/knn_20.joblib",
-    }
+    rec_models: List[str] = ["test"]
 
 
 def get_config() -> ServiceConfig:

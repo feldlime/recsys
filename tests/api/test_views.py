@@ -3,7 +3,7 @@ from http import HTTPStatus
 from requests.structures import CaseInsensitiveDict
 from starlette.testclient import TestClient
 
-from service.settings import ServiceConfig
+from service.settings import ServiceConfig, get_config
 
 GET_RECO_PATH = "/reco/{model_name}/{user_id}"
 
@@ -18,10 +18,10 @@ def test_health(
 
 def test_get_reco_success(
     client: TestClient,
-    service_config: ServiceConfig,
+    service_config: ServiceConfig = get_config(),
 ) -> None:
     user_id: int = 651
-    path = GET_RECO_PATH.format(model_name="userknn", user_id=user_id)
+    path = GET_RECO_PATH.format(model_name="test", user_id=user_id)
     api_token = service_config.access_token
     client.headers = CaseInsensitiveDict(
         {"Authorization": f"Bearer {api_token.get_secret_value()}"}
@@ -37,7 +37,7 @@ def test_get_reco_success(
 
 def test_get_reco_for_unknown_user(
     client: TestClient,
-    service_config: ServiceConfig,
+    service_config: ServiceConfig = get_config(),
 ) -> None:
     user_id = 10**10
     path = GET_RECO_PATH.format(model_name="test", user_id=user_id)
@@ -65,7 +65,7 @@ def test_get_reco_for_anauth_user(
 
 def test_get_reco_for_unknown_model(
     client: TestClient,
-    service_config: ServiceConfig,
+    service_config: ServiceConfig = get_config(),
 ) -> None:
     user_id = 4566
     path = GET_RECO_PATH.format(model_name="some_model", user_id=user_id)

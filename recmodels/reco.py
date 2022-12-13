@@ -17,6 +17,7 @@ class RecModel:
         self,
         model: Union[str, Any] = None,
         dataset: Union[pd.DataFrame, str] = None,
+        method: str = "predict",
         k_recs: int = 10,
     ) -> None:
         """
@@ -24,18 +25,19 @@ class RecModel:
         :param dataset: path to dataset or dataset itself
         :param k_recs: number of recommendations
         """
+        self.popular_recs: List[int] = None
         if isinstance(model, str):
             self.set_model(model)
         elif model is not None:
             self.model = model
-            self._trained = True
+            self.model_loaded = True
         else:
-            self._trained = False
+            self.model_loaded = False
 
         if dataset is not None:
             self.set_dataset(dataset)
-        else:
-            self.dataset: pd.DataFrame = None
+
+        self.set_predict_method(method)
 
         self.k: int = k_recs
 
@@ -48,7 +50,7 @@ class RecModel:
             self.model = joblib.load(model_path)
         except FileNotFoundError:
             raise FileNotFoundError("Model file not found")
-        self._trained = True
+        self.model_loaded = True
 
     def set_dataset(self, dataset: Union[pd.DataFrame, str]) -> None:
         """
@@ -62,33 +64,59 @@ class RecModel:
                 self.dataset = pd.read_csv(dataset)
             except FileNotFoundError:
                 raise Exception("Dataset file not found")
+        self._check_dataset()
+        self.calculate_popular_recs()
+
+    def set_predict_method(self, method: str) -> None:
+        """
+        Set method for prediction
+        :param method: method name
+        """
+        if self.model_loaded:
+            self._check_method(method)
+        self.predict_method = method
+
+    def calculate_popular_recs(self) -> None:
+        self._check_dataset()
+        self.popular_recs = (
+            self.dataset.groupby("item_id")
+            .count()
+            .sort_values(by="user_id", ascending=False)
+            .index.to_list()
+        )
+
+    def get_popular_recs(self, k: int = 10) -> List[int]:
+        """
+        Get popular recommendations
+        :param k: number of recommendations
+        """
+        if self.popular_recs is None:
+            try:
+                self.calculate_popular_recs()
+            except Exception as e:
+                raise Exception("Can't calculate popular recommendations") from e
+        return list(self.popular_recs)[:k]
 
     def predict(
-        self, inlet: Union[int, pd.DataFrame], predict_method: str = "predict"
+        self,
+        inlet: int,
+        k_recs: int,
     ) -> List[int]:
         """
         Predict recommendations
-        :param inlet: user_id or dataframe with user_id
+        :param inlet: user_id
         :param predict_method: method for prediction
         """
-        self._check_model()
-        # self._check_dataset()
-        self._check_method(predict_method)
-        return getattr(self.model, predict_method)(inlet, N_recs=self.k)
-
-    def _check_model(self) -> None:
-        """
-        Check if model is loaded
-        """
-        if not self._trained:
-            raise Exception("Model was not trained.")
+        if not self.model_loaded:
+            raise Exception("Model is not loaded.")
+        return getattr(self.model, self.predict_method)(inlet, k_recs)
 
     def _check_dataset(self) -> None:
         """
         Check if dataset is loaded and has user_id and item_id columns
         """
-        if self.dataset is None:
-            raise Exception("Dataset was not loaded.")
+        if not isinstance(self.dataset, pd.DataFrame):
+            raise Exception("Dataset is not a pandas DataFrame.")
         if not set(["user_id", "item_id"]).issubset(self.dataset.columns):
             raise Exception("Dataset has no user_id or item_id columns.")
 
@@ -99,3 +127,5 @@ class RecModel:
         """
         if method not in dir(self.model):
             raise Exception(f"Model has no this method: {method}.")
+        if not callable(getattr(self.model, method)):
+            raise Exception(f"Method {method} is not callable.")
